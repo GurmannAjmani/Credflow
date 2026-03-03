@@ -25,10 +25,6 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader, CSVLoader
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-# =====================================================
-# INITIAL SETUP
-# =====================================================
 load_dotenv()
 init_db()
 
@@ -41,16 +37,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in .env file")
-
-# =====================================================
-# GLOBAL MODELS
-# =====================================================
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=GEMINI_API_KEY)
 embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001", google_api_key=GEMINI_API_KEY)
-
-# =====================================================
-# HELPER FUNCTIONS
-# =====================================================
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -101,10 +89,6 @@ Questions: {query_text}"""
         return data
     except:
         return None
-
-# =====================================================
-# ROUTES
-# =====================================================
 @app.route('/')
 def index():
     if 'user' in session:
@@ -178,7 +162,6 @@ def api_process():
         return jsonify({'error': 'Please upload both knowledge base and questionnaire'}), 400
 
     try:
-        # Load KB
         documents = []
         for file in kb_files:
             filepath = os.path.join(USER_DIR, file.filename)
@@ -199,8 +182,6 @@ def api_process():
         vectorstore = FAISS.from_documents(docs, embeddings)
         vectorstore.save_local(FAISS_DIR)
         retriever = vectorstore.as_retriever(search_kwargs={"k": 8})
-
-        # Load questions
         q_path = os.path.join(USER_DIR, question_file.filename)
         question_file.save(q_path)
         q_loader = PyPDFLoader(q_path)
@@ -210,8 +191,6 @@ def api_process():
 
         if not questions:
             return jsonify({'error': 'No questions detected'}), 400
-
-        # Process QA
         all_answers = []
         BATCH_SIZE = 4
         
@@ -221,8 +200,6 @@ def api_process():
             result = get_qa_response(combined_query, retriever)
             if result:
                 all_answers.extend(result)
-
-        # Save run
         run_id = str(uuid.uuid4())
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         raw_filename = f"{USER_DIR}/output_{timestamp}.txt"
@@ -312,13 +289,9 @@ def api_export_pdf():
             pdf.multi_cell(0, 8, safe_text(f"Snippet: {item['snippet']}"))
 
             pdf.ln(5)
-
-        # Save to file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         pdf_filename = f"{USER_DIR}/export_{timestamp}.pdf"
         pdf.output(pdf_filename)
-
-        # Update database with PDF path if run_id is provided
         if run_id:
             update_run_pdf(run_id, pdf_filename)
 
@@ -340,7 +313,6 @@ def api_download_pdf(run_id):
     username = session['user']
     
     try:
-        # Get the PDF file path from database
         conn = __import__('sqlite3').connect('credflow.db')
         c = conn.cursor()
         c.execute("""
@@ -356,7 +328,6 @@ def api_download_pdf(run_id):
         
         pdf_path = result[0]
         
-        # Verify file exists and belongs to user
         if not os.path.exists(pdf_path) or not pdf_path.startswith(f"storage/{username}"):
             return jsonify({'error': 'PDF file not found'}), 404
         

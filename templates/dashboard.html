@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - CredFlow QA{% endblock %}
+{% block title %}Dashboard - CredFlow Demo{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -228,7 +228,6 @@ let allAnswers = [];
 let currentAnswers = [];
 let currentRunId = null;
 
-// File upload handlers
 document.getElementById('kbFiles').addEventListener('change', function() {
     updateFileList('kbFiles', 'kbFileList');
 });
@@ -363,9 +362,7 @@ async function regenerateAnswer(idx) {
 
 async function exportPDF() {
     const editMode = document.getElementById('editMode').checked;
-    
-    // If still in edit mode, save changes first
-    if (editMode) {
+        if (editMode) {
         const answersList = document.getElementById('answersList');
         const answerItems = answersList.querySelectorAll('.answer-item');
         
@@ -376,8 +373,6 @@ async function exportPDF() {
             }
         });
     }
-
-    // Use the potentially edited answers
     let exportData = JSON.parse(JSON.stringify(allAnswers));
 
     try {
@@ -409,8 +404,6 @@ async function exportPDF() {
         alert('Error: ' + error);
     }
 }
-
-// Edit mode toggle
 document.getElementById('editMode').addEventListener('change', function() {
     const answersList = document.getElementById('answersList');
     const answerItems = answersList.querySelectorAll('.answer-item');
@@ -419,7 +412,6 @@ document.getElementById('editMode').addEventListener('change', function() {
         const answerText = item.querySelector('.answer-text');
         
         if (this.checked) {
-            // Enable edit mode
             if (!item.querySelector('textarea')) {
                 const currentValue = allAnswers[idx].answer;
                 answerText.innerHTML = `<strong>Answer:</strong> <textarea id="edit_${idx}" style="min-height: 80px; margin-top: 8px;">${currentValue}</textarea>`;

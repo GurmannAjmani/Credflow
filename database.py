@@ -13,13 +13,7 @@ def get_connection():
 def init_db():
     conn = get_connection()
     c = conn.cursor()
-    
-    # Ensure foreign keys are enabled
     c.execute("PRAGMA foreign_keys = ON")
-
-    # -------------------------
-    # USERS
-    # -------------------------
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,10 +23,6 @@ def init_db():
         password TEXT NOT NULL
     )
     """)
-
-    # -------------------------
-    # RUNS (Run-level tracking)
-    # -------------------------
     c.execute("""
     CREATE TABLE IF NOT EXISTS runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,10 +35,6 @@ def init_db():
     """)
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_runs_username ON runs(username)")
-
-    # -------------------------
-    # ANSWERS (Linked to run_id)
-    # -------------------------
     c.execute("""
     CREATE TABLE IF NOT EXISTS answers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,24 +48,13 @@ def init_db():
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_answers_runid ON answers(run_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_answers_username ON answers(username)")
-
-    # -------------------------
-    # MIGRATION: Add pdf_output_file column if it doesn't exist
-    # -------------------------
     try:
         c.execute("ALTER TABLE runs ADD COLUMN pdf_output_file TEXT")
     except:
-        # Column already exists, that's fine
         pass
 
     conn.commit()
     conn.close()
-
-
-# ==========================
-# USER FUNCTIONS
-# ==========================
-
 def create_user(username, name, email, password):
     conn = get_connection()
     c = conn.cursor()
@@ -102,12 +77,6 @@ def get_user(username):
 
     conn.close()
     return user
-
-
-# ==========================
-# RUN FUNCTIONS
-# ==========================
-
 def save_run(username, run_id, raw_output_file, pdf_output_file=None):
     conn = get_connection()
     c = conn.cursor()
@@ -140,12 +109,6 @@ def update_run_pdf(run_id, pdf_output_file):
 
     conn.commit()
     conn.close()
-
-
-# ==========================
-# ANSWERS FUNCTIONS
-# ==========================
-
 def save_answers(username, run_id, output_json):
     conn = get_connection()
     c = conn.cursor()
