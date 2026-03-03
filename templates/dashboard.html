@@ -174,7 +174,7 @@
             <div><strong>Time:</strong> {{ run[3] }}</div>
             <div style="margin-top: 8px;">
                 {% if run[2] %}
-                <a href="{{ url_for('api_download_pdf', run_id=run[0]) }}" style="font-size: 12px; margin-right: 12px; display: inline-block;" download>📥 Download PDF</a>
+                <a href="{{ url_for('api_download_pdf', run_id=run[0]) }}" style="font-size: 12px; margin-right: 12px; display: inline-block;" download> Download PDF</a>
                 {% else %}
                 <span style="font-size: 12px; color: #888;">PDF not yet generated</span>
                 {% endif %}
