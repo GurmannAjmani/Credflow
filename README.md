@@ -25,5 +25,3 @@ This is a Flask-based Retrieval-Augmented Generation (RAG) application designed 
 - **Semantic Similarity Search**: Upgrade the retrieval engine to use more advanced semantic similarity techniques to ensure the AI finds even deeper connections between the questions and the knowledge base.
 - **Confidence Scoring**: Implement a scoring system that quantifies the AI's confidence in each answer, flagging low-confidence results for manual human review.
 - **OCR Integration**: Add Tesseract or AWS Textract to handle scanned PDFs and images.
-- **Background Tasks**: Move the heavy AI processing to a Celery/Redis worker queue to prevent frontend timeouts during large document processing.
-- **Human-in-the-Loop**: Add an interface for users to manually edit/correct AI answers before exporting the final PDF.
