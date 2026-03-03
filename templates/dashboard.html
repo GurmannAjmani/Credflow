@@ -128,7 +128,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>📚 Knowledge Base Q&A</h2>
+<h2> Knowledge Base and Questionnaire Uploading Section</h2>
 
 <div id="uploadSection" class="card">
     <h3>Upload Files</h3>
@@ -137,7 +137,7 @@
         <div>
             <label style="margin-bottom: 12px; display: block;">Knowledge Base Files (PDF/CSV)</label>
             <div class="file-upload" onclick="document.getElementById('kbFiles').click();">
-                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;">⬆️</div>
+                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;"></div>
                 <div style="color: #e0e0e0;">Click to upload or drag files here</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">Supports PDF and CSV</div>
                 <input type="file" id="kbFiles" multiple accept=".pdf,.csv">
@@ -148,7 +148,7 @@
         <div>
             <label style="margin-bottom: 12px; display: block;">Questionnaire (PDF)</label>
             <div class="file-upload" onclick="document.getElementById('questionFile').click();">
-                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;">⬆️</div>
+                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;"></div>
                 <div style="color: #e0e0e0;">Click to upload or drag file here</div>
                 <div style="color: #888; font-size: 12px; margin-top: 4px;">Only PDF</div>
                 <input type="file" id="questionFile" accept=".pdf">
@@ -157,7 +157,7 @@
         </div>
     </div>
 
-    <button id="processBtn" class="btn" onclick="processFiles()" style="width: fit-content;">Process All</button>
+    <button id="processBtn" class="btn" onclick="processFiles()" style="width: fit-content;">Generate answers</button>
 </div>
 
 <div id="loadingSection" class="loading">
@@ -166,7 +166,7 @@
 </div>
 
 <div id="historySection" class="card">
-    <h3>📜 Recent Runs</h3>
+    <h3>Recent Runs</h3>
     {% if history %}
         {% for run in history %}
         <div class="history-item">
@@ -184,7 +184,7 @@
 
 <div id="resultsSection" style="display: none;">
     <div class="card">
-        <h3>📊 Coverage Summary</h3>
+        <h3>Summary of Questions answered</h3>
         <div class="grid">
             <div class="metric">
                 <div class="metric-value" id="totalQuestions">0</div>
@@ -207,7 +207,7 @@
     </div>
 
     <div class="card">
-        <h3>📤 Export</h3>
+        <h3> Export as PDF</h3>
         <div class="checkbox" style="margin-bottom: 16px;">
             <input type="checkbox" id="editMode">
             <label for="editMode" style="margin: 0;">Edit answers before exporting</label>
@@ -314,7 +314,7 @@ function displayResults(total, found) {
             <div class="citation"><strong>Citation:</strong> ${item.citation}</div>
             <div class="snippet"><strong>Snippet:</strong> ${item.snippet}</div>
             <div class="answer-actions">
-                <button class="btn btn-small btn-secondary" onclick="regenerateAnswer(${idx});">🔄 Regenerate</button>
+                <button class="btn btn-small btn-secondary" onclick="regenerateAnswer(${idx});">Regenerate Answer</button>
             </div>
         `;
         answersList.appendChild(answerDiv);
