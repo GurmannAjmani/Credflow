@@ -16,7 +16,8 @@ from database import (
     get_user,
     save_answers,
     save_run,
-    get_user_history
+    get_user_history,
+    update_run_pdf
 )
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -273,6 +274,7 @@ def api_export_pdf():
     
     data = request.json
     export_data = data.get('answers', [])
+    run_id = data.get('run_id')
 
     if not export_data:
         return jsonify({'error': 'No data to export'}), 400
@@ -311,10 +313,14 @@ def api_export_pdf():
 
             pdf.ln(5)
 
-        # Save to file first, then send
+        # Save to file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         pdf_filename = f"{USER_DIR}/export_{timestamp}.pdf"
         pdf.output(pdf_filename)
+
+        # Update database with PDF path if run_id is provided
+        if run_id:
+            update_run_pdf(run_id, pdf_filename)
 
         return send_file(
             pdf_filename,
@@ -325,6 +331,44 @@ def api_export_pdf():
     
     except Exception as e:
         return jsonify({'error': f'PDF export failed: {str(e)}'}), 500
+
+
+@app.route('/api/download-pdf/<run_id>', methods=['GET'])
+@login_required
+def api_download_pdf(run_id):
+    """Download a previously generated PDF from a run."""
+    username = session['user']
+    
+    try:
+        # Get the PDF file path from database
+        conn = __import__('sqlite3').connect('credflow.db')
+        c = conn.cursor()
+        c.execute("""
+        SELECT pdf_output_file FROM runs
+        WHERE run_id = ? AND username = ?
+        """, (run_id, username))
+        
+        result = c.fetchone()
+        conn.close()
+        
+        if not result or not result[0]:
+            return jsonify({'error': 'PDF not found'}), 404
+        
+        pdf_path = result[0]
+        
+        # Verify file exists and belongs to user
+        if not os.path.exists(pdf_path) or not pdf_path.startswith(f"storage/{username}"):
+            return jsonify({'error': 'PDF file not found'}), 404
+        
+        return send_file(
+            pdf_path,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=os.path.basename(pdf_path)
+        )
+    
+    except Exception as e:
+        return jsonify({'error': f'Download failed: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -36,6 +36,7 @@ def init_db():
         username TEXT NOT NULL,
         run_id TEXT UNIQUE NOT NULL,
         raw_output_file TEXT,
+        pdf_output_file TEXT,
         timestamp TEXT,
         FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
     )
@@ -61,6 +62,15 @@ def init_db():
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_answers_runid ON answers(run_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_answers_username ON answers(username)")
+
+    # -------------------------
+    # MIGRATION: Add pdf_output_file column if it doesn't exist
+    # -------------------------
+    try:
+        c.execute("ALTER TABLE runs ADD COLUMN pdf_output_file TEXT")
+    except:
+        # Column already exists, that's fine
+        pass
 
     conn.commit()
     conn.close()
@@ -98,19 +108,35 @@ def get_user(username):
 # RUN FUNCTIONS
 # ==========================
 
-def save_run(username, run_id, raw_output_file):
+def save_run(username, run_id, raw_output_file, pdf_output_file=None):
     conn = get_connection()
     c = conn.cursor()
 
     c.execute("""
-    INSERT INTO runs (username, run_id, raw_output_file, timestamp)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO runs (username, run_id, raw_output_file, pdf_output_file, timestamp)
+    VALUES (?, ?, ?, ?, ?)
     """, (
         username,
         run_id,
         raw_output_file,
+        pdf_output_file,
         datetime.now().isoformat()
     ))
+
+    conn.commit()
+    conn.close()
+
+
+def update_run_pdf(run_id, pdf_output_file):
+    """Update a run with the generated PDF file path."""
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("""
+    UPDATE runs
+    SET pdf_output_file = ?
+    WHERE run_id = ?
+    """, (pdf_output_file, run_id))
 
     conn.commit()
     conn.close()
@@ -146,7 +172,7 @@ def get_user_history(username):
     c = conn.cursor()
 
     c.execute("""
-    SELECT run_id, raw_output_file, timestamp
+    SELECT run_id, raw_output_file, pdf_output_file, timestamp
     FROM runs
     WHERE username = ?
     ORDER BY timestamp DESC

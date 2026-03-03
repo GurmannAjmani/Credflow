@@ -171,10 +171,17 @@
         {% for run in history %}
         <div class="history-item">
             <div><strong>Run ID:</strong> <code style="color: #4a9eff; font-size: 12px;">{{ run[0][:8] }}...</code></div>
-            <div><strong>Time:</strong> {{ run[2] }}</div>
-            {% if run[1] and run[1] != 'None' %}
-            <a href="{{ run[1] }}" style="font-size: 12px; margin-top: 4px; display: inline-block;">⬇ Download Raw Output</a>
-            {% endif %}
+            <div><strong>Time:</strong> {{ run[3] }}</div>
+            <div style="margin-top: 8px;">
+                {% if run[2] %}
+                <a href="{{ url_for('api_download_pdf', run_id=run[0]) }}" style="font-size: 12px; margin-right: 12px; display: inline-block;" download>📥 Download PDF</a>
+                {% else %}
+                <span style="font-size: 12px; color: #888;">PDF not yet generated</span>
+                {% endif %}
+                {% if run[1] and run[1] != 'None' %}
+                <a href="{{ run[1] }}" style="font-size: 12px; display: inline-block;">⬇ Raw Output</a>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     {% else %}
@@ -219,6 +226,7 @@
 <script>
 let allAnswers = [];
 let currentAnswers = [];
+let currentRunId = null;
 
 // File upload handlers
 document.getElementById('kbFiles').addEventListener('change', function() {
@@ -280,6 +288,7 @@ async function processFiles() {
         if (data.success) {
             allAnswers = data.answers;
             currentAnswers = JSON.parse(JSON.stringify(data.answers));
+            currentRunId = data.run_id;
             displayResults(data.total, data.found);
             document.getElementById('loadingSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
@@ -378,7 +387,8 @@ async function exportPDF() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                answers: exportData
+                answers: exportData,
+                run_id: currentRunId
             })
         });
 
