@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CredFlow QA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .answer-item {
+        background: #1a1a1a;
+        border-left: 3px solid #4a9eff;
+        border-radius: 4px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .answer-item h4 {
+        color: #4a9eff;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .answer-item .answer-text {
+        color: #e0e0e0;
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    .answer-item .citation {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 8px;
+        word-break: break-all;
+    }
+
+    .answer-item .snippet {
+        background: #0a0a0a;
+        border-left: 2px solid #333;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #aaa;
+        margin-bottom: 8px;
+        border-radius: 2px;
+        font-style: italic;
+    }
+
+    .answer-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 900px) {
+        .two-col {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .file-upload {
+        border: 2px dashed #333;
+        border-radius: 6px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .file-upload:hover {
+        border-color: #4a9eff;
+    }
+
+    .file-upload input[type="file"] {
+        display: none;
+    }
+
+    .file-list {
+        margin-top: 12px;
+        font-size: 13px;
+    }
+
+    .file-item {
+        background: #0a0a0a;
+        padding: 6px 8px;
+        border-radius: 2px;
+        margin: 4px 0;
+        color: #4a9eff;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #333;
+        margin-bottom: 20px;
+    }
+
+    .tab {
+        padding: 12px 20px;
+        border: none;
+        background: none;
+        color: #888;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab.active {
+        color: #4a9eff;
+        border-bottom-color: #4a9eff;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>📚 Knowledge Base Q&A</h2>
+
+<div id="uploadSection" class="card">
+    <h3>Upload Files</h3>
+    
+    <div class="two-col">
+        <div>
+            <label style="margin-bottom: 12px; display: block;">Knowledge Base Files (PDF/CSV)</label>
+            <div class="file-upload" onclick="document.getElementById('kbFiles').click();">
+                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;">⬆️</div>
+                <div style="color: #e0e0e0;">Click to upload or drag files here</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">Supports PDF and CSV</div>
+                <input type="file" id="kbFiles" multiple accept=".pdf,.csv">
+            </div>
+            <div id="kbFileList" class="file-list"></div>
+        </div>
+
+        <div>
+            <label style="margin-bottom: 12px; display: block;">Questionnaire (PDF)</label>
+            <div class="file-upload" onclick="document.getElementById('questionFile').click();">
+                <div style="color: #4a9eff; font-size: 24px; margin-bottom: 8px;">⬆️</div>
+                <div style="color: #e0e0e0;">Click to upload or drag file here</div>
+                <div style="color: #888; font-size: 12px; margin-top: 4px;">Only PDF</div>
+                <input type="file" id="questionFile" accept=".pdf">
+            </div>
+            <div id="questionFileList" class="file-list"></div>
+        </div>
+    </div>
+
+    <button id="processBtn" class="btn" onclick="processFiles()" style="width: fit-content;">Process All</button>
+</div>
+
+<div id="loadingSection" class="loading">
+    <div class="spinner"></div>
+    <p style="margin-top: 12px; color: #888;">Processing... This may take a few minutes</p>
+</div>
+
+<div id="historySection" class="card">
+    <h3>📜 Recent Runs</h3>
+    {% if history %}
+        {% for run in history %}
+        <div class="history-item">
+            <div><strong>Run ID:</strong> <code style="color: #4a9eff; font-size: 12px;">{{ run[0][:8] }}...</code></div>
+            <div><strong>Time:</strong> {{ run[2] }}</div>
+            {% if run[1] and run[1] != 'None' %}
+            <a href="{{ run[1] }}" style="font-size: 12px; margin-top: 4px; display: inline-block;">⬇ Download Raw Output</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #888;">No previous runs yet.</p>
+    {% endif %}
+</div>
+
+<div id="resultsSection" style="display: none;">
+    <div class="card">
+        <h3>📊 Coverage Summary</h3>
+        <div class="grid">
+            <div class="metric">
+                <div class="metric-value" id="totalQuestions">0</div>
+                <div class="metric-label">Total Questions</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="foundQuestions">0</div>
+                <div class="metric-label">Answered (with Citations)</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="notFoundQuestions">0</div>
+                <div class="metric-label">Not Found</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Detailed Answers</h3>
+        <div id="answersList"></div>
+    </div>
+
+    <div class="card">
+        <h3>📤 Export</h3>
+        <div class="checkbox" style="margin-bottom: 16px;">
+            <input type="checkbox" id="editMode">
+            <label for="editMode" style="margin: 0;">Edit answers before exporting</label>
+        </div>
+        <button class="btn" onclick="exportPDF();">⬇ Export as PDF</button>
+    </div>
+</div>
+
+<script>
+let allAnswers = [];
+let currentAnswers = [];
+
+// File upload handlers
+document.getElementById('kbFiles').addEventListener('change', function() {
+    updateFileList('kbFiles', 'kbFileList');
+});
+
+document.getElementById('questionFile').addEventListener('change', function() {
+    updateFileList('questionFile', 'questionFileList');
+});
+
+function updateFileList(inputId, listId) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    list.innerHTML = '';
+    
+    if (inputId === 'kbFiles') {
+        Array.from(input.files).forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.textContent = '✓ ' + file.name;
+            list.appendChild(item);
+        });
+    } else {
+        if (input.files.length > 0) {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.textContent = '✓ ' + input.files[0].name;
+            list.appendChild(item);
+        }
+    }
+}
+
+async function processFiles() {
+    const kbFiles = document.getElementById('kbFiles').files;
+    const questionFile = document.getElementById('questionFile').files[0];
+
+    if (kbFiles.length === 0 || !questionFile) {
+        alert('Please upload both knowledge base and questionnaire files.');
+        return;
+    }
+
+    const formData = new FormData();
+    Array.from(kbFiles).forEach(file => {
+        formData.append('kb_files', file);
+    });
+    formData.append('question_file', questionFile);
+
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'block';
+
+    try {
+        const response = await fetch('{{ url_for("api_process") }}', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            allAnswers = data.answers;
+            currentAnswers = JSON.parse(JSON.stringify(data.answers));
+            displayResults(data.total, data.found);
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
+        }
+    } catch (error) {
+        alert('Error processing files: ' + error);
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('uploadSection').style.display = 'block';
+    }
+}
+
+function displayResults(total, found) {
+    const notFound = total - found;
+    
+    document.getElementById('totalQuestions').textContent = total;
+    document.getElementById('foundQuestions').textContent = found;
+    document.getElementById('notFoundQuestions').textContent = notFound;
+
+    const answersList = document.getElementById('answersList');
+    answersList.innerHTML = '';
+
+    allAnswers.forEach((item, idx) => {
+        const answerDiv = document.createElement('div');
+        answerDiv.className = 'answer-item';
+        answerDiv.innerHTML = `
+            <h4>${idx + 1}. ${item.question}</h4>
+            <div class="answer-text"><strong>Answer:</strong> ${item.answer}</div>
+            <div class="citation"><strong>Citation:</strong> ${item.citation}</div>
+            <div class="snippet"><strong>Snippet:</strong> ${item.snippet}</div>
+            <div class="answer-actions">
+                <button class="btn btn-small btn-secondary" onclick="regenerateAnswer(${idx});">🔄 Regenerate</button>
+            </div>
+        `;
+        answersList.appendChild(answerDiv);
+    });
+}
+
+async function regenerateAnswer(idx) {
+    const item = allAnswers[idx];
+    
+    try {
+        const response = await fetch('{{ url_for("api_regenerate", idx=0) }}'.replace('0', idx), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                question: item.question
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            allAnswers[idx] = data.answer;
+            currentAnswers[idx] = data.answer;
+            
+            const found = allAnswers.filter(a => a.answer !== "Not Found in References").length;
+            const total = allAnswers.length;
+            displayResults(total, found);
+        } else {
+            alert('Error regenerating: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error);
+    }
+}
+
+async function exportPDF() {
+    const editMode = document.getElementById('editMode').checked;
+    
+    // If still in edit mode, save changes first
+    if (editMode) {
+        const answersList = document.getElementById('answersList');
+        const answerItems = answersList.querySelectorAll('.answer-item');
+        
+        answerItems.forEach((item, idx) => {
+            const textarea = item.querySelector('textarea');
+            if (textarea) {
+                allAnswers[idx].answer = textarea.value;
+            }
+        });
+    }
+
+    // Use the potentially edited answers
+    let exportData = JSON.parse(JSON.stringify(allAnswers));
+
+    try {
+        const response = await fetch('{{ url_for("api_export_pdf") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                answers: exportData
+            })
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'export_' + new Date().getTime() + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } else {
+            alert('Error exporting PDF');
+        }
+    } catch (error) {
+        alert('Error: ' + error);
+    }
+}
+
+// Edit mode toggle
+document.getElementById('editMode').addEventListener('change', function() {
+    const answersList = document.getElementById('answersList');
+    const answerItems = answersList.querySelectorAll('.answer-item');
+    
+    answerItems.forEach((item, idx) => {
+        const answerText = item.querySelector('.answer-text');
+        
+        if (this.checked) {
+            // Enable edit mode
+            if (!item.querySelector('textarea')) {
+                const currentValue = allAnswers[idx].answer;
+                answerText.innerHTML = `<strong>Answer:</strong> <textarea id="edit_${idx}" style="min-height: 80px; margin-top: 8px;">${currentValue}</textarea>`;
+            }
+        } else {
+            // Disable edit mode - save changes first
+            const textarea = item.querySelector('textarea');
+            if (textarea) {
+                // Save the edited value back to allAnswers
+                allAnswers[idx].answer = textarea.value;
+            }
+            // Display the (possibly edited) answer
+            answerText.innerHTML = `<strong>Answer:</strong> ${allAnswers[idx].answer}`;
+        }
+    });
+});
+</script>
+{% endblock %}
