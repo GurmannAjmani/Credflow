@@ -1,0 +1,11 @@
+Fee_Category,Sub_Category,Charge_Value,Calculation_Basis,Notes
+Foreclosure,Pre-closure Fee (0-3 Months),Prohibited,N/A,No foreclosure allowed in first 90 days.
+Foreclosure,Pre-closure Fee (3-12 Months),3%,Of Outstanding Principal,Subject to 18% GST.
+Foreclosure,Pre-closure Fee (>12 Months),0%,N/A,Free after 12 successful EMIs.
+Late_Payment,Grace Period,2 Days,Calendar Days,No penalty if paid within 48 hours of due date.
+Late_Payment,Fixed Late Fee,500,Per Instance,Applied on Day 3 of default.
+Late_Payment,Penal Interest,2%,Monthly (Additional),Added to base ROI on overdue amount.
+Bouncing,Cheque/NACH Bounce,450,Per Bounce,Charged by CredFlow (Bank may charge extra).
+Modifications,EMI Date Change,1000,One-time,Subject to internal risk approval.
+Statements,Annual Tax Certificate,0,Free,Downloadable via Mobile App.
+Statements,Physical Copy Request,250,Per Request,Includes courier charges within India.

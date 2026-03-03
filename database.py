@@ -13,6 +13,9 @@ def get_connection():
 def init_db():
     conn = get_connection()
     c = conn.cursor()
+    
+    # Ensure foreign keys are enabled
+    c.execute("PRAGMA foreign_keys = ON")
 
     # -------------------------
     # USERS
@@ -37,8 +40,7 @@ def init_db():
         run_id TEXT UNIQUE NOT NULL,
         raw_output_file TEXT,
         pdf_output_file TEXT,
-        timestamp TEXT,
-        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+        timestamp TEXT
     )
     """)
 
@@ -54,9 +56,7 @@ def init_db():
         run_id TEXT NOT NULL,
         question TEXT,
         answer TEXT,
-        citation TEXT,
-        FOREIGN KEY (run_id) REFERENCES runs(run_id) ON DELETE CASCADE,
-        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+        citation TEXT
     )
     """)
 
