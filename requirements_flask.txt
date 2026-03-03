@@ -7,3 +7,4 @@ langchain-google-genai==4.2.1
 faiss-cpu==1.13.2
 pypdf==6.7.5
 fpdf==1.7.2
+gunicorn==22.0.0
